@@ -1,0 +1,32 @@
+# virtual environment
+venv_topick/
+
+# python cache
+__pycache__/
+*.pyc
+
+# experiment outputs
+result/
+
+# packaging artifacts
+*.egg-info/
+
+# OS files
+.DS_Store
+
+# datasets / large artifacts
+result/
+
+
+# --- generated artifacts (large) ---
+data/cms/query_clf_logit
+data/cms/query_emb
+data/cms/topic_emb
+data/cms/topic_predictor
+data/cms/qid2tid_dic
+data/cms/topic_list
+
+# topic knowledge artifacts (model-specific)
+data/cms/topic_knowledge_*
+
+
