@@ -149,7 +149,9 @@ for batch in tqdm(topic_loader):
 
 topic_emb = np.array(topic_embeddings)
 
+# -------------------------
 # 저장
+# -------------------------
 with open(data_dir + task_name + "/query_emb", "wb") as fw:
     pickle.dump(query_emb, fw, protocol=pickle.HIGHEST_PROTOCOL)
 

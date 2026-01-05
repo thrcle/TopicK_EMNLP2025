@@ -201,107 +201,107 @@ with open(data_dir + task_name + "/query_clf_logit", 'wb') as fw:
 
 print("Done.")
 
-################# 추가
-# =========================
-# 추가: TopicK inference 실행 + result 저장
-# =========================
+# ################# 추가
+# # =========================
+# # 추가: TopicK inference 실행 + result 저장
+# # =========================
 
-RUN_INFERENCE = True       # 필요할 때만 True
-SKIP_PREPROCESS = False    # 전처리 파일 이미 있으면 True로 바꿔서 시간 절약
+# RUN_INFERENCE = True       # 필요할 때만 True
+# SKIP_PREPROCESS = False    # 전처리 파일 이미 있으면 True로 바꿔서 시간 절약
 
-if SKIP_PREPROCESS:
-    print("Skip preprocess (user flag).")
+# if SKIP_PREPROCESS:
+#     print("Skip preprocess (user flag).")
 
-if RUN_INFERENCE:
-    print("Start inference to generate result json...")
+# if RUN_INFERENCE:
+#     print("Start inference to generate result json...")
 
-    # prediction.py가 읽는 경로와 동일하게
-    # model_name = "meta-llama/Llama-3.2-3B-Instruct"
-    # model_name = "google/flan-t5-base"
-    model_name = "EleutherAI/pythia-70m"
-    ppl_model_name = "EleutherAI/pythia-70m"
+#     # prediction.py가 읽는 경로와 동일하게
+#     # model_name = "meta-llama/Llama-3.2-3B-Instruct"
+#     # model_name = "google/flan-t5-base"
+#     model_name = "EleutherAI/pythia-70m"
+#     ppl_model_name = "EleutherAI/pythia-70m"
 
-    seed = 1
-    k_shot = 8
+#     seed = 1
+#     k_shot = 8
 
-    # 1) result 폴더 생성
-    output_json_filepath = os.path.join("result", model_name, task_name)
-    os.makedirs(output_json_filepath, exist_ok=True)
-    print("output_json_filepath:", output_json_filepath)
+#     # 1) result 폴더 생성
+#     output_json_filepath = os.path.join("result", model_name, task_name)
+#     os.makedirs(output_json_filepath, exist_ok=True)
+#     print("output_json_filepath:", output_json_filepath)
 
-    # 2) 전처리 산출물 로드 (이미 위에서 만들었으면 그대로 써도 됨)
-    #    - query_emb/topic_emb/query_clf_logit 는 위에서 생성됨
-    #    - topic_knowledge는 레포에 저장 규칙이 있을 텐데, 없으면 먼저 생성해야 함
-    #      (파일명이 다르면 여기만 맞춰줘야 함)
-    model_short = model_name.split("/")[-1]
-    topic_knowledge_path = os.path.join(data_dir, task_name, f"topic_knowledge_{model_short}")
+#     # 2) 전처리 산출물 로드 (이미 위에서 만들었으면 그대로 써도 됨)
+#     #    - query_emb/topic_emb/query_clf_logit 는 위에서 생성됨
+#     #    - topic_knowledge는 레포에 저장 규칙이 있을 텐데, 없으면 먼저 생성해야 함
+#     #      (파일명이 다르면 여기만 맞춰줘야 함)
+#     model_short = model_name.split("/")[-1]
+#     topic_knowledge_path = os.path.join(data_dir, task_name, f"topic_knowledge_{model_short}")
 
-    if not os.path.exists(topic_knowledge_path):
-        raise FileNotFoundError(
-            f"topic_knowledge 파일이 없어: {topic_knowledge_path}\n"
-            f"repo에서 topic_knowledge 생성 단계가 따로 있을 수 있어. 파일명/생성 스크립트를 확인해야 함."
-        )
+#     if not os.path.exists(topic_knowledge_path):
+#         raise FileNotFoundError(
+#             f"topic_knowledge 파일이 없어: {topic_knowledge_path}\n"
+#             f"repo에서 topic_knowledge 생성 단계가 따로 있을 수 있어. 파일명/생성 스크립트를 확인해야 함."
+#         )
 
-    with open(topic_knowledge_path, "rb") as f:
-        topic_knowledge = pickle.load(f)
+#     with open(topic_knowledge_path, "rb") as f:
+#         topic_knowledge = pickle.load(f)
 
-    # 3) DatasetReader 구성
-    data_reader = DatasetReader(
-        combined_dataset,
-        input_columns=input_columns[task_name],
-        output_column=output_columns[task_name]
-    )
+#     # 3) DatasetReader 구성
+#     data_reader = DatasetReader(
+#         combined_dataset,
+#         input_columns=input_columns[task_name],
+#         output_column=output_columns[task_name]
+#     )
 
-    # 4) Retriever 생성 (TopicKRetriever)
-    accelerator = Accelerator()
+#     # 4) Retriever 생성 (TopicKRetriever)
+#     accelerator = Accelerator()
 
-    # TopicKRetriever는 openicl.icl_retriever.__init__에 export되어 있음
-    from openicl.icl_retriever import TopicKRetriever
+#     # TopicKRetriever는 openicl.icl_retriever.__init__에 export되어 있음
+#     from openicl.icl_retriever import TopicKRetriever
 
-    topick_retriever = TopicKRetriever(
-        dataset_reader=data_reader,
-        CLF=CLF,                      # 위에서 로드한 CLF
-        query_clf_logit=c_clf_logit,  # 위에서 만든 query_clf_logit
-        topic_knowledge=topic_knowledge,
-        task_name=task_name,
-        ice_num=k_shot,
-        tokenizer_name=model_name,
-        batch_size=1,
-        accelerator=accelerator,
-        seed=seed
-    )
+#     topick_retriever = TopicKRetriever(
+#         dataset_reader=data_reader,
+#         CLF=CLF,                      # 위에서 로드한 CLF
+#         query_clf_logit=c_clf_logit,  # 위에서 만든 query_clf_logit
+#         topic_knowledge=topic_knowledge,
+#         task_name=task_name,
+#         ice_num=k_shot,
+#         tokenizer_name=model_name,
+#         batch_size=1,
+#         accelerator=accelerator,
+#         seed=seed
+#     )
 
-    # 5) Inferencer 생성 + inference
-    # inferencer = PPLInferencer(
-    #     model_name=model_name,
-    #     tokenizer=model_name,
-    #     output_json_filepath=output_json_filepath,
-    #     batch_size=1,
-    #     accelerator=accelerator
-    # )
-    inferencer = PPLInferencer(
-    model_name=ppl_model_name,
-    tokenizer=ppl_model_name,
-    output_json_filepath=output_json_filepath,
-    batch_size=1,
-    accelerator=accelerator
-)
+#     # 5) Inferencer 생성 + inference
+#     # inferencer = PPLInferencer(
+#     #     model_name=model_name,
+#     #     tokenizer=model_name,
+#     #     output_json_filepath=output_json_filepath,
+#     #     batch_size=1,
+#     #     accelerator=accelerator
+#     # )
+#     inferencer = PPLInferencer(
+#     model_name=ppl_model_name,
+#     tokenizer=ppl_model_name,
+#     output_json_filepath=output_json_filepath,
+#     batch_size=1,
+#     accelerator=accelerator
+# )
 
 
-    output_file = f"TopicK_seed{seed}_{k_shot}_shot"  # prediction.py가 '8_shot'을 찾으니까 이 포맷 유지
-    preds = inferencer.inference(
-        topick_retriever,
-        ice_template=templates[task_name],
-        output_json_filename=output_file
-    )
+#     output_file = f"TopicK_seed{seed}_{k_shot}_shot"  # prediction.py가 '8_shot'을 찾으니까 이 포맷 유지
+#     preds = inferencer.inference(
+#         topick_retriever,
+#         ice_template=templates[task_name],
+#         output_json_filename=output_file
+#     )
 
-    # 6) 저장 보장: inferencer 내부 저장이 안 되더라도 무조건 파일 생성
-    save_path = os.path.join(output_json_filepath, output_file + ".json")
-    with open(save_path, "w") as f:
-        json.dump(preds, f, ensure_ascii=False, indent=2)
-    print("Saved:", save_path)
+#     # 6) 저장 보장: inferencer 내부 저장이 안 되더라도 무조건 파일 생성
+#     save_path = os.path.join(output_json_filepath, output_file + ".json")
+#     with open(save_path, "w") as f:
+#         json.dump(preds, f, ensure_ascii=False, indent=2)
+#     print("Saved:", save_path)
 
-    # CUDA에서만 캐시 비우기
-    if torch.cuda.is_available():
-        torch.cuda.empty_cache()
+#     # CUDA에서만 캐시 비우기
+#     if torch.cuda.is_available():
+#         torch.cuda.empty_cache()
 
